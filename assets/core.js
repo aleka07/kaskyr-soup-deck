@@ -400,7 +400,10 @@
     root.pause();
     gsap.globalTimeline.pause();
     const t0 = tl.startTime();
-    root.seek(t0, false);
+    // Sweep to the end and back so every tween renders its start state; otherwise frame 0
+    // shows the keyframe built by build() for one frame (a flash at every chapter cut).
+    root.seek(t0 + tl.duration(), true);
+    root.seek(t0, true);
     window.__seek = async t => { root.seek(t0 + t, false); await frame(); return t; };
     window.__info = { n: s.ch.n, id, duration: seg.duration, timeline: tl.duration(), fakeSegment: !!seg.fake };
     window.__timeline = tl;
