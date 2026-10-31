@@ -1,8 +1,8 @@
-/* Chapter 8, result: "Same training, 5.6× less memory."
-   Two T4 boxes on one scale (0 … 15,360 MiB, the same scale as the core memory box): base 14,345, ours 2,541.
-   The ratio is shown, not stated: copies of our box fly up into the base box, 5.6454 of them fit.
+/* Chapter 8, result: "Same training, 5.8× less memory."
+   Two T4 boxes on one scale (0 … 15,360 MiB, the same scale as the core memory box): base 14,345, ours 2,479.
+   The ratio is shown, not stated: copies of our box fly up into the base box, 5.787 of them fit.
    Below, the proof that the training is the same: eval loss, 10/10 checks, own-kernel share, memory points.
-   Numbers: docs/submission-facts.md (run 52). */
+   Numbers: docs/submission-facts.md (run 1031-2312). */
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const E = (tag, a, p, txt) => {
@@ -15,7 +15,7 @@
   const C = { bg: '#0B0F14', ink: '#E8EDF2', dim: '#8A96A3', base: '#FF5A36', ours: '#2EE6A6', mech: '#5B8CFF', line: '#1E2833', panel: '#121922', edge: '#3A4756' };
   const fmt = n => Math.round(n).toLocaleString('en-US');
 
-  const BASE = 14345, OURS = 2541, MAX = 15360, RATIO = BASE / OURS; // 5.6454
+  const BASE = 14345, OURS = 2479, MAX = 15360, RATIO = BASE / OURS; // 5.787
   const BX0 = 120, BX1 = 1800, W = m => m / MAX * (BX1 - BX0);
   const RB = { lbl: 310, y: 334, h: 120 };   // base row
   const RO = { lbl: 550, y: 574, h: 120 };   // ours row
@@ -30,7 +30,7 @@
     tl.add(api.box.tweenHide({ duration: 0.5 }), 0);
     fade(root.querySelector('.r8-h'), T.head, 0.6, { opacity: 0, y: 14 }, { y: 0 });
     fade(root.querySelector('.r8-sub'), T.sub, 0.6, { opacity: 0, y: 10 }, { y: 0 });
-    // video: chapter 7 ended on our 2,541 MiB, so our bar is full from t = 0 and its track is already there
+    // video: chapter 7 ended on our 2,479 MiB, so our bar is full from t = 0 and its track is already there
     fade(T.oursFull ? P.tracks.filter(t => t !== P.oTrack) : P.tracks, T.tracks, 0.5);
     // base fills, counting
     const cb = { v: 0 }, co = { v: T.oursFull ? OURS : 0 }, cr = { v: 0 };
@@ -71,10 +71,10 @@
 
   Deck.chapter({
     n: 8, id: 'result',
-    title: 'Same training, 5.6× less memory.',
+    title: 'Same training, 5.8× less memory.',
     html: `
-      <h2 class="r8-h">Same training, 5.6× less memory.</h2>
-      <p class="r8-sub">Peak GPU memory, read by nvidia-smi from outside the training process. Kaggle T4, run 52.</p>
+      <h2 class="r8-h">Same training, 5.8× less memory.</h2>
+      <p class="r8-sub">Peak GPU memory, read by nvidia-smi from outside the training process. Kaggle T4, run 1031-2312.</p>
       <svg class="r8-svg" data-allow-box-zone viewBox="0 0 1920 1080" width="1920" height="1080"></svg>`,
     css: `
       .ch-result .r8-h { position: relative; z-index: 2; }
@@ -123,10 +123,10 @@
       }
       // the ratio, in the empty part of our row
       P.ratioG = E('g', { opacity: 0 }, svg);
-      P.ratio = E('text', { x: BX1 - 24, y: RO.y + 92, 'text-anchor': 'end', class: 'ours', 'font-size': 96 }, P.ratioG, '5.6×');
+      P.ratio = E('text', { x: BX1 - 24, y: RO.y + 92, 'text-anchor': 'end', class: 'ours', 'font-size': 96 }, P.ratioG, '5.8×');
       P.ratioEq = E('text', { x: BX1 - 300, y: RO.y + 68, 'text-anchor': 'end', class: 's', 'font-size': 21 }, svg);
       E('tspan', { x: BX1 - 300, dy: 0 }, P.ratioEq, 'our peak fits into the base peak');
-      E('tspan', { x: BX1 - 300, dy: 28, class: '', 'font-family': 'Plex Mono' }, P.ratioEq, '14,345 / 2,541 = 5.6454');
+      E('tspan', { x: BX1 - 300, dy: 28, class: '', 'font-family': 'Plex Mono' }, P.ratioEq, '14,345 / 2,479 = 5.787');
 
       // proof row
       P.rule = E('line', { x1: BX0, x2: BX1, y1: 774, y2: 774, stroke: C.line, 'stroke-width': 1.5 }, svg);
@@ -134,9 +134,9 @@
       // 1. eval loss
       let g = col(0), x = COLS[0];
       const lt = E('text', { x, y: PY, 'font-size': 38 }, g);
-      E('tspan', { class: 'ink' }, lt, '2.04964');
+      E('tspan', { class: 'ink' }, lt, '2.04967');
       E('tspan', { class: 's', dx: 10 }, lt, '→');
-      E('tspan', { class: 'ink', dx: 10 }, lt, '2.04961');
+      E('tspan', { class: 'ink', dx: 10 }, lt, '2.04963');
       E('text', { x, y: PL, class: 's', 'font-size': 21 }, g, 'eval loss, base to ours: unchanged');
       // 2. checks
       g = col(1); x = COLS[1];
@@ -144,17 +144,17 @@
       E('text', { x, y: PL, class: 's', 'font-size': 21 }, g, '10 of 10 admission checks pass');
       // 3. own-kernel share
       g = col(2); x = COLS[2];
-      E('text', { x, y: PY, class: 'ink', 'font-size': 38 }, g, '8.50%');
+      E('text', { x, y: PY, class: 'ink', 'font-size': 38 }, g, '9.3%');
       const bx = x + 150, bw = 230, by = PY - 18;
       E('rect', { x: bx, y: by, width: bw, height: 12, fill: C.panel, stroke: C.edge, 'stroke-width': 1 }, g);
-      P.shareW = bw * 8.5 / 10;
+      P.shareW = bw * 9.3 / 10;
       P.share = E('rect', { x: bx, y: by, width: P.shareW, height: 12, fill: C.ours }, g);
       E('line', { x1: bx + bw / 2, x2: bx + bw / 2, y1: by - 8, y2: by + 20, stroke: C.ink, 'stroke-width': 2 }, g);
       E('text', { x: bx + bw / 2, y: by - 14, 'text-anchor': 'middle', 'font-size': 15 }, g, '5% required');
       E('text', { x, y: PL, class: 's', 'font-size': 21 }, g, 'of training time in our own kernels');
       // 4. memory points
       g = col(3); x = COLS[3];
-      E('text', { x, y: PY, class: 'ours', 'font-size': 38 }, g, '≈ 47');
+      E('text', { x, y: PY, class: 'ours', 'font-size': 38 }, g, '≈ 48');
       E('text', { x, y: PL, class: 's', 'font-size': 21 }, g, 'points from the memory term of the score');
     },
 

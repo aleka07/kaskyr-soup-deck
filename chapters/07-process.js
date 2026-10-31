@@ -1,7 +1,7 @@
 /* Chapter 7, process: "We found it by measuring: ~550 ledger rows."
    The chart is window.LEDGER (presentation/assets/ledger.js, generated from ledger/*.tsv): every dot is one
    measured Kaggle T4 run. The green step line is main's measured peak: the base, the example kernel, the first
-   kept body recompute (9,661), then every ledger `merge` row, then the submitted 029d932 (2,541).
+   kept body recompute (9,661), then every ledger `merge` row, then the submitted 63fd58c (2,479).
    One proxy (`clock.t`, hours) drives the sweep, so seeking the video timeline is deterministic. */
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
@@ -32,8 +32,8 @@
     runs.filter(r => r[3] === 'merge').forEach(r => {
       if (r[2] < best) { p.push([r[1], r[2], r[2] === 5283 ? 'head' : r[2] === 2459 ? 'replay' : 'step', r]); best = r[2]; }
     });
-    const sub = find(r => r[2] === 2541 && r[0] === 'h' && r[3] === 'keep', ['h', 31.3, 2541]);
-    p.push([sub[1], 2541, 'sub']);
+    const sub = find(r => r[2] === 2479 && r[0] === 'h' && r[3] === 'keep', ['h', 31.3, 2479]);
+    p.push([sub[1], 2479, 'sub']);
     return p;
   }
 
@@ -92,7 +92,7 @@
       .ch-process .p7-svg .base { fill: var(--base); }
       .ch-process .p7-svg .mech { fill: var(--mech); }
     `,
-    box: [{ key: 'ours', mib: 2541, color: 'ours', label: 'ours' }],
+    box: [{ key: 'ours', mib: 2479, color: 'ours', label: 'ours' }],
 
     build(root, api) {
       const svg = root.querySelector('.p7-svg');
@@ -204,12 +204,12 @@
         P.ms.push({ n: tx, t });
       });
       // the submitted point
-      const sx = X(at('sub')[0]), sy = Y(2541);
+      const sx = X(at('sub')[0]), sy = Y(2479);
       const sg = (P.sub = E('g', { opacity: 0 }, ch));
       E('circle', { cx: sx, cy: sy, r: 9, fill: C.ours }, sg);
       const st = E('text', { x: X1, y: sy + 38, 'text-anchor': 'end', class: 'halo' }, sg);
       E('tspan', { class: 's ink', 'font-size': 20, 'font-weight': 600 }, st, 'submitted ');
-      E('tspan', { class: 'ours', 'font-size': 22 }, st, '2,541');
+      E('tspan', { class: 'ours', 'font-size': 22 }, st, '2,479');
       E('text', { x: X1, y: sy + 62, 'text-anchor': 'end', class: 's halo', 'font-size': 17 }, sg, '2,459 failed the time check in run 51');
       P.subT = at('sub')[0];
 

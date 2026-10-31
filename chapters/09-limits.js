@@ -1,17 +1,17 @@
 /* Chapter 09: limits. The price of the memory win, measured on one wall-time ruler.
-   Numbers (docs/submission-facts.md, run 52): base 83.13 s, ours 90.07 s (x1.083);
-   check 8 limit = 83.13 x 1.10 = 91.44 s (1.37 s headroom); speed points need
-   s >= 1.05, i.e. <= 83.13 / 1.05 = 79.17 s; previous main failed check 8 at x1.136 (run 51). */
+   Numbers (run 1031-2312, source 63fd58c, MLP padding compaction): base 87.84 s, ours 86.4 s (x0.984);
+   check 8 limit = 87.84 x 1.10 = 96.62 s (~10.2 s headroom); speed points need
+   s >= 1.05, i.e. <= 87.84 / 1.05 = 83.66 s. Ghost: previous source 029d932 at x1.083 (90.07 s). */
 (function () {
-  const BASE = 83.13, OURS = 90.07, LIMIT = 91.443, TARGET = 83.13 / 1.05, PREV = 83.13 * 1.136;
-  const S0 = 76, S1 = 96, XL = 120, XR = 1800;
+  const BASE = 87.84, OURS = 86.4, LIMIT = 87.84 * 1.10, TARGET = 87.84 / 1.05, PREV = 90.07;
+  const S0 = 80, S1 = 98, XL = 120, XR = 1800;
   const X = s => XL + (s - S0) / (S1 - S0) * (XR - XL);
   // vertical layout of the ruler (stage px)
   const BT = 400, BB = 516;            // band top / bottom
   const AY = 652;                      // buy-back arrow
   const E = 'power3.out', IO = 'power2.inOut';
   let N = null;   // nodes made in build()
-  const BOX = [{ key: 'ours', mib: 2541, color: 'ours', label: 'ours' }];
+  const BOX = [{ key: 'ours', mib: 2479, color: 'ours', label: 'ours' }];
 
   // one sequence, two clocks: the deck uses fixed cue times, the video uses word times
   function seq(api, T, tl) {
@@ -24,14 +24,14 @@
       .fromTo(n.cap.children, { opacity: 0 }, { opacity: 1, duration: 0.5, stagger: 0.1 }, T.zones + 0.2)
       .fromTo(n.lim, { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.zones + 0.3)
       .fromTo(n.bm, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: E }, T.base)
-      // ours leaves the base line and walks right to 90.07 s; the clock counts with it
+      // ours leaves the base line and walks left to 86.4 s; the clock counts with it
       .fromTo(n.om, { opacity: 0 }, { opacity: 1, duration: 0.3 }, T.slide - 0.2)
       .fromTo(n.om, { x: dx }, { x: 0, duration: T.slideDur, ease: IO }, T.slide)
-      .fromTo(n.price, { attr: { width: 0 } }, { attr: { width: X(OURS) - X(BASE) }, duration: T.slideDur, ease: IO }, T.slide);
+      .fromTo(n.price, { attr: { x: X(BASE), width: 0 } }, { attr: { x: X(OURS), width: X(BASE) - X(OURS) }, duration: T.slideDur, ease: IO }, T.slide);
     const o = { v: BASE };
     tl.fromTo(o, { v: BASE }, { v: OURS, duration: T.slideDur, ease: IO,
-      onUpdate: () => { n.clk.textContent = o.v.toFixed(2); } }, T.slide);
-    // the moving number stays hidden while ours slides over the "83.13" base label, then fades in at 90.07
+      onUpdate: () => { n.clk.textContent = o.v.toFixed(1); } }, T.slide);
+    // the moving number stays hidden while ours slides over the base label, then fades in at 86.4
     tl.fromTo(n.clk.parentNode, { opacity: 0 }, { opacity: 1, duration: 0.4 }, T.slide + T.slideDur);
     tl.fromTo(n.pl, { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.price)
       .fromTo(n.hr, { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.head)
@@ -50,16 +50,16 @@
 
   Deck.chapter({
     n: 9, id: 'limits',
-    title: 'The price: 7 seconds. Next, we buy them back.',
+    title: 'Faster than the base. 2.7 seconds from speed points.',
     box: BOX,
     html: `
-      <h2 class="lim-h">The price: 7 seconds. Next, we buy them back.</h2>
-      <p class="lim-sub">Wall time of <code>soup train</code> on the Kaggle T4, run 52. The previous main (2,459 MiB) failed check 8 in run 51, so we submit <code>029d932</code>.</p>
+      <h2 class="lim-h">Faster than the base. 2.7 seconds from speed points.</h2>
+      <p class="lim-sub">Wall time of <code>soup train</code> on the Kaggle T4, run 1031-2312. 42.4% of token positions are padding; the MLP now runs only on valid rows. Before: <code>029d932</code> (2,541&nbsp;MiB) ran ×1.083 with 1.37&nbsp;s headroom; main before that failed check&nbsp;8 at ×1.136.</p>
       <svg class="lim-svg" viewBox="0 0 1920 1080" fill="#8A96A3" aria-hidden="true"></svg>
       <div class="lim-levers">
-        <div class="lim-lv"><b>Overlap or fuse the recompute</b><span>hide the rebuild behind the matmuls</span></div>
-        <div class="lim-lv"><b>Fuse NF4 dequant into the GEMM</b><span>skip the fp16 round trip through memory</span></div>
-        <div class="lim-lv"><b>Cut start-up</b><span>~24&nbsp;s of the wall is load and 4&#8209;bit quantization</span></div>
+        <div class="lim-lv"><b>Remove padding everywhere</b><span>through the whole model and the head, not only the MLP</span></div>
+        <div class="lim-lv"><b>Fused LoRA and cast kernels</b><span>fewer launches, no fp16 round trips through memory</span></div>
+        <div class="lim-lv"><b>Toward ~1&nbsp;GB</b><span>fp16 tied-embedding storage and weight streaming (docs/ROADMAP-1GB-45S.md)</span></div>
       </div>`,
     css: `
       .ch-limits .lim-h { font-size: 64px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 650; max-width: 1680px; }
@@ -69,7 +69,7 @@
       .ch-limits .lim-svg text { font-family: "Onest", system-ui, sans-serif; }
       .ch-limits .lim-svg .m { font-family: "Plex Mono", ui-monospace, monospace; font-weight: 500; }
       .ch-limits .lim-svg .m .u { font-family: "Onest", system-ui, sans-serif; font-weight: 500; }
-      .ch-limits .lim-levers { position: absolute; left: ${X(TARGET)}px; width: ${X(OURS) - X(TARGET)}px; top: ${AY + 34}px;
+      .ch-limits .lim-levers { position: absolute; left: ${XL}px; width: ${XR - XL}px; top: ${AY + 34}px;
         display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
       .ch-limits .lim-lv { border-left: 2px solid #2EE6A6; padding-left: 16px; }
       .ch-limits .lim-lv b { display: block; font-weight: 600; font-size: 23px; line-height: 1.2; color: #E8EDF2; letter-spacing: -0.01em; }
@@ -100,9 +100,9 @@
 
       // zone captions under the band
       const cap = el('g', { class: 'l-caps' }, s);
-      el('text', { class: 'lc-green', x: X(S0) + 2, y: BB + 34, 'font-size': 20, fill: C.ours }, cap, 'speed scores');
-      el('text', { class: 'lc-neutral', x: X(TARGET) + 14, y: BB + 34, 'font-size': 20 }, cap, 'admitted, speed scores 0');
-      el('text', { class: 'lc-red', x: X(LIMIT) + 14, y: BB + 34, 'font-size': 20, fill: C.base }, cap, 'check 8 fails, over +10%');
+      el('text', { class: 'lc-green', x: X(S0) + 2, y: BB + 34, 'font-size': 20, fill: C.ours }, cap, 'speed scores, ≤ 83.7 s');
+      el('text', { class: 'lc-neutral', x: X(TARGET) + 14, y: BB + 34, 'font-size': 20 }, cap, 'admitted, speed 0');
+      el('text', { class: 'lc-red', x: XR - 4, y: BB + 34, 'text-anchor': 'end', 'font-size': 20, fill: C.base }, cap, 'check 8 fails, > 96.6 s');
 
       // ticks
       const tk = el('g', { class: 'l-ticks' }, s);
@@ -112,56 +112,56 @@
       }
 
       // price: hatched span base -> ours
-      const price = el('rect', { class: 'l-price', x: X(BASE), y: BT + 1, width: X(OURS) - X(BASE), height: H - 2, fill: 'url(#lim-hatch)' }, s);
+      const price = el('rect', { class: 'l-price', x: X(OURS), y: BT + 1, width: X(BASE) - X(OURS), height: H - 2, fill: C.ours, 'fill-opacity': 0.16 }, s);
       const pl = el('g', { class: 'l-price-lbl' }, s);
       const pcx = (X(BASE) + X(OURS)) / 2;
-      el('rect', { x: pcx - 150, y: MID - 40, width: 300, height: 78, rx: 3, fill: C.bg, 'fill-opacity': 0.88 }, pl);
-      secs({ x: pcx, y: MID + 6, 'text-anchor': 'middle', 'font-size': 40, fill: C.ink }, pl, '+6.94');
-      el('text', { x: pcx, y: MID + 30, 'text-anchor': 'middle', 'font-size': 18 }, pl, 'recompute, ×1.083');
+      secs({ x: pcx, y: MID + 4, 'text-anchor': 'middle', 'font-size': 28, fill: C.ours }, pl, '−1.44');
+      el('text', { class: 'm', x: pcx, y: MID + 30, 'text-anchor': 'middle', 'font-size': 18, fill: C.ink }, pl, '×0.984');
 
       // headroom ours -> limit
       const hr = el('g', { class: 'l-head' }, s);
-      el('rect', { x: X(OURS), y: BT + 1, width: X(LIMIT) - X(OURS), height: H - 2, fill: C.ink, 'fill-opacity': 0.06 }, hr);
-      secs({ x: (X(OURS) + X(LIMIT)) / 2, y: MID + 2, 'text-anchor': 'middle', 'font-size': 22, fill: C.ink }, hr, '1.37');
-      el('text', { x: (X(OURS) + X(LIMIT)) / 2, y: MID + 24, 'text-anchor': 'middle', 'font-size': 15 }, hr, 'headroom');
+      el('rect', { x: X(BASE), y: BT + 1, width: X(LIMIT) - X(BASE), height: H - 2, fill: C.ink, 'fill-opacity': 0.05 }, hr);
+      const hx = (X(PREV) + X(LIMIT)) / 2;
+      secs({ x: hx, y: MID + 4, 'text-anchor': 'middle', 'font-size': 26, fill: C.ink }, hr, '10.2');
+      el('text', { x: hx, y: MID + 28, 'text-anchor': 'middle', 'font-size': 16 }, hr, 'headroom to check 8');
 
       // limit line
       const lim = el('g', { class: 'l-limit' }, s);
       el('line', { x1: X(LIMIT), x2: X(LIMIT), y1: BT - 14, y2: BB + 14, stroke: C.base, 'stroke-width': 3 }, lim);
-      secs({ x: X(LIMIT) + 12, y: BT - 22, 'font-size': 20, fill: C.base }, lim, '91.44');
+      secs({ x: X(LIMIT) + 10, y: BT - 22, 'font-size': 20, fill: C.base }, lim, '96.62');
 
-      // previous main, run 51
-      const pv = el('g', { class: 'l-prev' }, s);
-      el('line', { x1: X(PREV), x2: X(PREV), y1: BT, y2: BB, stroke: C.base, 'stroke-width': 2, 'stroke-dasharray': '5 6' }, pv);
-      el('text', { class: 'm', x: X(PREV), y: BT - 52, 'text-anchor': 'middle', 'font-size': 22, fill: C.base }, pv, '×1.136');
-      el('text', { x: X(PREV), y: BT - 22, 'text-anchor': 'middle', 'font-size': 18 }, pv, 'previous main, run 51');
+      // ghost: previous source 029d932, x1.083
+      const pv = el('g', { class: 'l-prev', opacity: 0.55 }, s);
+      el('line', { x1: X(PREV), x2: X(PREV), y1: BT, y2: BB, stroke: C.dim, 'stroke-width': 2, 'stroke-dasharray': '5 6' }, pv);
+      el('text', { x: X(PREV) + 10, y: BT - 52, 'font-size': 20, fill: C.dim }, pv, '90.07 s, ×1.083');
+      el('text', { x: X(PREV) + 10, y: BT - 24, 'font-size': 17, fill: C.dim }, pv, 'before: 029d932');
 
       // target
       const tg = el('g', { class: 'l-target' }, s);
       el('line', { x1: X(TARGET), x2: X(TARGET), y1: BT - 14, y2: AY, stroke: C.ours, 'stroke-width': 2.5, 'stroke-dasharray': '6 6' }, tg);
-      secs({ x: X(TARGET) - 12, y: BT - 22, 'text-anchor': 'end', 'font-size': 22, fill: C.ours }, tg, '≤ 79.2');
+      secs({ x: X(TARGET) - 12, y: BT - 22, 'text-anchor': 'end', 'font-size': 22, fill: C.ours }, tg, '≤ 83.7');
 
       // base marker
       const bm = el('g', { class: 'l-base' }, s);
       el('line', { x1: X(BASE), x2: X(BASE), y1: BT - 14, y2: BB + 14, stroke: C.ink, 'stroke-width': 3 }, bm);
-      el('text', { x: X(BASE), y: BT - 62, 'text-anchor': 'middle', 'font-size': 20 }, bm, 'base');
-      secs({ x: X(BASE), y: BT - 24, 'text-anchor': 'middle', 'font-size': 30, fill: C.ink }, bm, '83.13');
+      el('text', { x: X(BASE) + 10, y: BT - 62, 'font-size': 20 }, bm, 'base');
+      secs({ x: X(BASE) + 10, y: BT - 24, 'font-size': 30, fill: C.ink }, bm, '87.84');
 
       // ours marker (the clock): moves from base to 90.07 while counting
       const om = el('g', { class: 'l-ours' }, s);
       el('line', { x1: X(OURS), x2: X(OURS), y1: BT - 14, y2: BB + 14, stroke: C.ours, 'stroke-width': 4 }, om);
-      el('text', { x: X(OURS), y: BT - 80, 'text-anchor': 'middle', 'font-size': 20, fill: C.ours }, om, 'ours');
-      const clk = secs({ x: X(OURS), y: BT - 24, 'text-anchor': 'middle', 'font-size': 48, fill: C.ours }, om, '90.07');
+      el('text', { x: X(OURS) - 10, y: BT - 80, 'text-anchor': 'end', 'font-size': 20, fill: C.ours }, om, 'ours');
+      const clk = secs({ x: X(OURS) - 10, y: BT - 24, 'text-anchor': 'end', 'font-size': 48, fill: C.ours }, om, '86.4');
 
       // buy-back arrow: from ours to the target
       const ar = el('g', { class: 'l-arrow' }, s);
       const arDrop = el('line', { x1: X(OURS), x2: X(OURS), y1: BB + 14, y2: AY + 1.5, stroke: C.ours, 'stroke-width': 3 }, ar);
       const arLine = el('line', { x1: X(OURS), x2: X(TARGET) + 14, y1: AY, y2: AY, stroke: C.ours, 'stroke-width': 3 }, ar);
       const arHead = el('path', { d: `M${X(TARGET)},${AY} l18,-9 l0,18 z`, fill: C.ours }, ar);
-      const arLbl = el('text', { x: (X(OURS) + X(TARGET)) / 2, y: AY - 14, 'text-anchor': 'middle', 'font-size': 22, fill: C.ink }, ar);
-      el('tspan', { class: 'm', fill: C.ours }, arLbl, '−10.9');
+      const arLbl = el('text', { x: X(OURS) + 14, y: AY + 7, 'font-size': 22, fill: C.ink }, ar);
+      el('tspan', { class: 'm', fill: C.ours }, arLbl, '−2.7');
       el('tspan', { fill: C.ours, dx: 4 }, arLbl, 's');
-      el('tspan', {}, arLbl, ' more for speed points');
+      el('tspan', {}, arLbl, ' for speed points');
 
       // core.css sets svg text fill by CSS, which beats fill attributes: promote them to inline style
       s.querySelectorAll('text[fill], tspan[fill]').forEach(t => { t.style.fill = t.getAttribute('fill'); });
@@ -180,27 +180,13 @@
     },
 
     video(root, api, seg) {
-      const w = (word, k) => { const t = api.word(seg, word, k || 0); return t == null || isNaN(t) ? null : t; };
-      const at = (word, k, fb) => { const t = w(word, k); return t == null ? fb : t; };
+      // the narration changed with the result: reuse the deck's cue times, padded to the segment
       const tl = gsap.timeline({ paused: true });
       api.box.set(BOX);
-      // narration (limits): Честно о минусах. Мы медленнее базы примерно на восемь процентов:
-      // пересчёт стоит времени. Дальше — спрятать пересчёт за вычислениями и сократить загрузку модели.
-      // Тогда появится и скорость.
-      const T = {
-        title: 0, ruler: 0.1,
-        zones: at('минусах', 0, 0.53),
-        base: at('базы', 0, 1.95) - 0.1,
-        slide: at('примерно', 0, 2.29), slideDur: 1.4,
-        price: at('пересчёт', 0, 3.83),
-        head: at('стоит', 0, 4.3),
-        prev: at('времени', 0, 4.65),
-        arrow: at('Дальше', 0, 5.24), arrowDur: 1.3,
-        levers: [at('спрятать', 0, 5.71), at('вычислениями', 0, 6.66), at('сократить', 0, 7.52)],
-        green: at('скорость', 0, 9.88) - 0.15,
-      };
-      seq(api, T, tl);
-      // pad (or trim) to exactly the segment duration
+      seq(api, {
+        title: 0, ruler: 0.2, zones: 0.4, base: 0.9, slide: 1.3, slideDur: 1.2, price: 2.3, head: 2.6, prev: 2.9,
+        arrow: 3.3, arrowDur: 1.1, levers: [3.7, 3.9, 4.1], green: 4.6,
+      }, tl);
       if (tl.duration() < seg.duration) tl.set({}, {}, seg.duration);
       return tl;
     },

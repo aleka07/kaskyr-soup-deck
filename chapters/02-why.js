@@ -1,12 +1,12 @@
 /* Chapter 02 — why.
    What fine-tuning is (a ready model + your data -> your model, drawn as the real
    28-layer stack with LoRA adapters), and why memory decides who can do it: the base
-   job needs 14,345 MiB of the free T4 (the core box), our version needs 2,541 MiB on
-   the same scale and leaves 12,819 MiB free.
+   job needs 14,345 MiB of the free T4 (the core box), our version needs 2,479 MiB on
+   the same scale and leaves 12,881 MiB free.
    Static SVG/HTML is built at the keyframe; timelines animate from earlier states. */
 (function () {
   'use strict';
-  const MAX = 15360, BASE = 14345, OURS = 2541;
+  const MAX = 15360, BASE = 14345, OURS = 2479;
   const X0 = 120, X1 = 1800, W = X1 - X0;
   const X = m => X0 + m / MAX * W;
   const fmt = n => Math.round(n).toLocaleString('en-US');

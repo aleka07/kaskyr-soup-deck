@@ -37,15 +37,15 @@
   const BX = bits32(X32), BA = bits16(A16), BH = bits32(H32);
 
   // Box at the keyframe: the activations block collapses; what is left is the measured peak.
-  // ch5 hands over { weights 2,048 est., acts 3,235 est. } = 5,283; ch7 starts from { key: 'ours', 2,541 }. We collapse 'acts'
-  // to 2,541 (still orange), then swap to 'ours' on landing (it turns green) so the hand-off to ch7 does not cross-fade.
+  // ch5 hands over { weights 2,048 est., acts 3,235 est. } = 5,283; ch7 starts from { key: 'ours', 2,479 }. We collapse 'acts'
+  // to 2,479 (still orange), then swap to 'ours' on landing (it turns green) so the hand-off to ch7 does not cross-fade.
   // The weights block (2,048 est., from ch4/ch5) stays; only the activations block collapses.
   const W_MIB = 2048, ACOL = '#D9482B';
   const COLLAPSE = [
     { key: 'weights', mib: W_MIB, color: 'dim', label: 'weights', est: true },
-    { key: 'acts', mib: 2541 - W_MIB, color: ACOL, label: 'activations, 28 layers', est: true },
+    { key: 'acts', mib: 2479 - W_MIB, color: ACOL, label: 'activations, 28 layers', est: true },
   ];
-  const BOX = [{ key: 'ours', mib: 2541, color: 'ours', label: 'ours' }];
+  const BOX = [{ key: 'ours', mib: 2479, color: 'ours', label: 'ours' }];
 
   const css = `
 .ch-body h2 { width: 1500px; }
@@ -226,9 +226,9 @@
     /* ---------- landing annotation on the box ---------- */
     // core.css `svg text { fill }` overrides presentation attributes: move text fills to inline style
     const fixFills = () => s.querySelectorAll('text').forEach(t => { const f = t.getAttribute('fill'); if (f) { t.style.fill = f; t.removeAttribute('fill'); } });
-    const mx = 120 + 2541 / 15360 * 1680;
+    const mx = 120 + 2479 / 15360 * 1680;
     const land = g('bd-land'); land.setAttribute('data-allow-box-zone', '');
-    el('text', { x: mx + 16, y: 918, class: 'sans', 'font-size': 18, fill: C.ink }, land, 'peak by nvidia-smi, Kaggle T4, run 52');
+    el('text', { x: mx + 16, y: 918, class: 'sans', 'font-size': 18, fill: C.ink }, land, 'peak by nvidia-smi, Kaggle T4, run 1031-2312');
     R.land = land;
     fixFills();
   }
@@ -330,7 +330,7 @@
     if (api.box && api.box.node) {
       const X = api.box.X || (m => 120 + m / 15360 * 1680);
       const ga = api.el('g', { class: 'bd-baseghost' }, api.box.node);
-      api.el('rect', { x: X(2541) + 1.5, y: 931.5, width: X(14345) - X(2541) - 3, height: 57, fill: 'none', stroke: C.base, 'stroke-opacity': .75, 'stroke-width': 1.5, 'stroke-dasharray': '3 5' }, ga);
+      api.el('rect', { x: X(2479) + 1.5, y: 931.5, width: X(14345) - X(2479) - 3, height: 57, fill: 'none', stroke: C.base, 'stroke-opacity': .75, 'stroke-width': 1.5, 'stroke-dasharray': '3 5' }, ga);
       const t = api.el('text', { x: X(14345) - 14, y: 966, 'text-anchor': 'end', 'font-size': 17 }, ga, 'base 14,345 MiB');
       t.style.fill = C.base; t.style.fontFamily = 'var(--mono)';
       tl.fromTo(ga, { opacity: 0 }, { opacity: 1, duration: .6, ease: E, immediateRender: true }, at.land);

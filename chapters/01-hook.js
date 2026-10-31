@@ -1,11 +1,11 @@
 /* Chapter 01 — hook.
    The whole story in one move: the T4's memory, cut into sixths, fills to the base's
-   14,345 MiB, then drains to our 2,541 MiB, which sits inside the first sixth.
+   14,345 MiB, then drains to our 2,479 MiB, which sits inside the first sixth.
    Static SVG/HTML is built at the keyframe; every timeline animates *from* earlier
    states, so progress(1) (or no animation at all) is the keyframe. */
 (function () {
   'use strict';
-  const MAX = 15360, BASE = 14345, OURS = 2541, SIXTH = MAX / 6; // 2,560
+  const MAX = 15360, BASE = 14345, OURS = 2479, SIXTH = MAX / 6; // 2,560
   const X0 = 120, X1 = 1800, W = X1 - X0;
   const X = m => X0 + m / MAX * W;
   const BY = 612, BH = 248;            // the big box: y 612..860 (core box is hidden on this slide)
@@ -166,7 +166,7 @@
       sub: w('те', 0, 9.59),
     }, api);
     // hand-off to chapter 2: the big box morphs into the core box (x 120-1800, y 930-990),
-    // ours at 2,541, then the core box itself fades in on top in the state chapter 2 starts from
+    // ours at 2,479, then the core box itself fades in on top in the state chapter 2 starts from
     const G = api.geom || { y0: 930, y1: 990 };
     const tM = Math.max(w('результат', 0, 11.3) + 0.5, seg.duration - 1.5), mD = 0.8;
     const r = R;
