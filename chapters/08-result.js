@@ -30,14 +30,16 @@
     tl.add(api.box.tweenHide({ duration: 0.5 }), 0);
     fade(root.querySelector('.r8-h'), T.head, 0.6, { opacity: 0, y: 14 }, { y: 0 });
     fade(root.querySelector('.r8-sub'), T.sub, 0.6, { opacity: 0, y: 10 }, { y: 0 });
-    fade(P.tracks, T.tracks, 0.5);
+    // video: chapter 7 ended on our 2,541 MiB, so our bar is full from t = 0 and its track is already there
+    fade(T.oursFull ? P.tracks.filter(t => t !== P.oTrack) : P.tracks, T.tracks, 0.5);
     // base fills, counting
-    const cb = { v: 0 }, co = { v: 0 }, cr = { v: 0 };
+    const cb = { v: 0 }, co = { v: T.oursFull ? OURS : 0 }, cr = { v: 0 };
     const setB = () => { P.bFill.setAttribute('width', W(cb.v)); P.bNum.textContent = fmt(cb.v) + ' MiB'; };
     const setO = () => { P.oFill.setAttribute('width', W(co.v)); P.oNum.textContent = fmt(co.v) + ' MiB'; };
     tl.fromTo(cb, { v: 0 }, { v: BASE, duration: T.baseFill[1] - T.baseFill[0], ease: 'power2.inOut', onUpdate: setB, onStart: setB }, T.baseFill[0]);
-    tl.fromTo(co, { v: 0 }, { v: OURS, duration: T.oursFill[1] - T.oursFill[0], ease: 'power2.inOut', onUpdate: setO, onStart: setO }, T.oursFill[0]);
+    if (!T.oursFull) tl.fromTo(co, { v: 0 }, { v: OURS, duration: T.oursFill[1] - T.oursFill[0], ease: 'power2.inOut', onUpdate: setO, onStart: setO }, T.oursFill[0]);
     tl.call(setB, null, 0); tl.call(setO, null, 0);
+    if (T.oursFull) setO();
     const setR = () => { P.ratio.textContent = Math.max(0, cr.v).toFixed(1) + '×'; };
     // the ratio: copies of our box are laid along the base box
     const [t0, t1] = T.tile, n = P.copies.length, step = (t1 - t0 - 0.7) / (n - 1);
@@ -100,7 +102,7 @@
         return { num, track, fill };
       };
       const b = row(RB, 'base', 'base', C.base), o = row(RO, 'ours', 'ours', C.ours);
-      P.bNum = b.num; P.oNum = o.num; P.bFill = b.fill; P.oFill = o.fill;
+      P.bNum = b.num; P.oNum = o.num; P.bFill = b.fill; P.oFill = o.fill; P.oTrack = o.track;
       // 2,048 MiB ticks on both tracks, the core box's grid
       const tg = E('g', {}, svg);
       for (let m = 2048; m < MAX; m += 2048) {
@@ -157,7 +159,7 @@
     },
 
     enter(root, api) {
-      const T = { head: 0, sub: 0.2, tracks: 0.3, baseFill: [0.5, 1.7], oursFill: [1.8, 2.7], tile: [2.9, 4.6], loss: 4.6, checks: [4.9, 5.6], kern: 5.7, pts: 6.0 };
+      const T = { head: 0, sub: 0.2, tracks: 0.3, baseFill: [0.5, 1.7], oursFull: true, tile: [2.9, 4.6], loss: 4.6, checks: [4.9, 5.6], kern: 5.7, pts: 6.0 };
       return seq(root, api, T);
     },
 
@@ -168,8 +170,8 @@
         sub: w('пик') + 0.1,
         tracks: w('пик') - 0.1,
         baseFill: [w('четырнадцать'), w('базы')],
-        oursFill: [w('две'), w('нас') + 0.1],
-        tile: [w('пять') - 0.15, w('меньше') + 0.4],
+        oursFull: true,
+        tile: [w('нас') + 0.15, w('раза')],
         loss: w('качество'),
         checks: [w('все'), w('пройдены') + 0.3],
         kern: w('пройдены') + 0.6,

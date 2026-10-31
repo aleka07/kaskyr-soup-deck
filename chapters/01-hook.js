@@ -45,13 +45,13 @@
     r.card = el('text', { x: X1, y: BY - 22, 'font-size': 22, 'text-anchor': 'end' }, s, 'Kaggle T4: 15,360 MiB usable');
 
     // the card's memory
-    el('rect', { x: X0, y: BY, width: W, height: BH, fill: C.panel, stroke: C.line, 'stroke-width': 2, rx: 6 }, s);
+    r.frame = el('rect', { x: X0, y: BY, width: W, height: BH, fill: C.panel, stroke: C.line, 'stroke-width': 2, rx: 6 }, s);
 
     // fill: base (orange) under ours (green); same width, the colour crossfades on the drain
     const clipId = 'hk-clip';
     const defs = el('defs', {}, s);
     const cp = el('clipPath', { id: clipId }, defs);
-    el('rect', { x: X0, y: BY, width: W, height: BH, rx: 6 }, cp);
+    r.clipRect = el('rect', { x: X0, y: BY, width: W, height: BH, rx: 6 }, cp);
     // the base's footprint, tinted under the fills (stays visible after the drain)
     r.ghostTint = el('rect', { x: X0, y: BY, width: X(BASE) - X0, height: BH, fill: C.base, 'fill-opacity': 0.07 }, s);
     const fills = el('g', { 'clip-path': `url(#${clipId})` }, s);
@@ -165,6 +165,20 @@
       drain: tDrain, drainDur: Math.max(0.6, tLand - tDrain),
       sub: w('те', 0, 9.59),
     }, api);
+    // hand-off to chapter 2: the big box morphs into the core box (x 120-1800, y 930-990),
+    // ours at 2,541, then the core box itself fades in on top in the state chapter 2 starts from
+    const G = api.geom || { y0: 930, y1: 990 };
+    const tM = Math.max(w('результат', 0, 11.3) + 0.5, seg.duration - 1.5), mD = 0.8;
+    const r = R;
+    const STATE = [{ key: 'ours', mib: OURS, color: 'ours', label: 'ours' }];
+    api.box.set(STATE);
+    tl.set(api.box.node, { opacity: 0 }, 0);
+    const geo = { attr: { y: G.y0, height: G.y1 - G.y0, rx: 0 }, duration: mD, ease: 'power2.inOut' };
+    tl.to([r.frame, r.clipRect, r.fBase, r.fOurs, r.ghostTint], geo, tM);
+    tl.to(r.frame, { attr: { 'stroke-width': 1 }, duration: mD, ease: 'power2.inOut' }, tM);
+    tl.to([r.team, r.l1, r.l2, r.sub], { opacity: 0, duration: 0.5, ease: 'power1.in' }, tM);
+    tl.to([r.cap, r.card, r.ghost, r.ghostTint, r.sixth, r.num, r.word].concat(r.divs, r.ticks), { opacity: 0, duration: 0.4, ease: 'power1.in' }, tM);
+    tl.to(api.box.node, { opacity: 1, duration: 0.3, ease: 'power1.out' }, tM + mD - 0.1);
     tl.set({}, {}, seg.duration);
     return tl;
   }

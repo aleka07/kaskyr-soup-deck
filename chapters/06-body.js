@@ -183,6 +183,7 @@
     el('text', { x: L0, y: OY + OH + 106, class: 'sans', 'font-size': 18 }, an,
       'Blue ops replay with the RNG state restored: LoRA dropout 0.05 draws the same masks.');
     R.anat = an;
+    R.klist = kl;
 
     /* ---------- act 3: the residual sum, bit for bit ---------- */
     const B0 = 1150, BL = 1262, cell = 13.5, pitch = 16.4;
@@ -234,7 +235,7 @@
 
   /* ---------- timeline ---------- */
   // One builder for deck and video: `at` maps a story cue to a time; `pace` scales the per-layer steps.
-  function timeline(root, api, at, pace) {
+  function timeline(root, api, at, pace, lean) {
     const { C } = api;
     const tl = gsap.timeline({ paused: false });
     const E = 'power2.out', IO = 'power2.inOut';
@@ -301,8 +302,11 @@
           .to(c.num, { fill: C.dim, duration: .2 }, t + bwStep * 1.4);
       }
     }
-    tl.to(R.legend, { opacity: 1, duration: .4 }, at.park)
-      .to(R.preempt, { opacity: 1, duration: .5 }, at.preempt);
+    tl.to(R.legend, { opacity: 1, duration: .4 }, at.park);
+    if (!lean) tl.to(R.preempt, { opacity: 1, duration: .5 }, at.preempt);
+
+    // video: the kernel-name line stays hidden (the tags under the ops carry it)
+    if (lean) tl.set(R.klist, { opacity: 0 }, 0);
 
     // the lens opens layer PARK
     tl.to(R.lens, { opacity: 1, duration: .5, ease: E }, at.lens)
@@ -365,7 +369,7 @@
         bw: Math.max(1, at.park - at.bw - .2),
         bit: Math.max(.006, (w('бит', 1) + .2 - at.match) / 32),
         boxDur: 1.2,
-      });
+      }, true);
       tl.to({}, { duration: 0 }, seg.duration);
       tl.paused(true);
       return tl;

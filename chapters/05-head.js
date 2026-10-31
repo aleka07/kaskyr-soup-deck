@@ -117,7 +117,7 @@
     n.f2 = el('text', { x: SX, y: MY + MH + 76, 'font-size': 18, fill: C.ink }, svg, "s' = s·e^(m−m') + Σ e^(z−m')");
     n.k1 = el('text', { x: SX, y: MY + MH + 100, 'font-size': 13 }, svg, 'head_stats_partial, head_online_merge');
     n.fin = el('text', { x: SX, y: MY + MH + 120, 'font-size': 13 }, svg);
-    el('tspan', { fill: C.dim }, n.fin, 'head_stats_finish → ');
+    n.finK = el('tspan', { fill: C.dim }, n.fin, 'head_stats_finish → ');
     el('tspan', { fill: C.ours }, n.fin, 'loss, entropy, accuracy');
 
     // ---------- backward ----------
@@ -150,8 +150,10 @@
     n.prod = el('g', {}, svg);
     el('text', { x: PX, y: EY, 'font-size': 24, fill: C.ink }, n.prod, 'hi·W + lo·W / S');
     el('text', { x: PX, y: EY + 30, class: 'sans', 'font-size': 18 }, n.prod, 'two cuBLAS products, summed in FP32');
-    el('text', { x: PX, y: EY + 58, 'font-size': 13 }, n.prod, 'head_residual_max, head_residual_scale,');
-    el('text', { x: PX, y: EY + 76, 'font-size': 13 }, n.prod, 'head_ce_compensated, head_accumulate_compensated');
+    n.prodK = [
+      el('text', { x: PX, y: EY + 58, 'font-size': 13 }, n.prod, 'head_residual_max, head_residual_scale,'),
+      el('text', { x: PX, y: EY + 76, 'font-size': 13 }, n.prod, 'head_ce_compensated, head_accumulate_compensated'),
+    ];
 
     // independent check
     const KX = 1452, KY = BY - 6, KW = 1800 - KX, KH = 124;
@@ -166,10 +168,14 @@
     // measured milestone, beside the box readout (box zone, allowed)
     n.ms = el('g', { 'data-allow-box-zone': '' }, svg);
     n.msT = el('text', { x: 330, y: 919, class: 'sans', 'font-size': 17 }, n.ms);
-    el('tspan', { fill: C.dim }, n.msT, 'measured on the T4 when the streamed head was added: ');
-    el('tspan', { fill: C.base, 'font-family': 'var(--mono)' }, n.msT, '9,661');
+    el('tspan', { fill: C.base, 'font-family': 'var(--mono)' }, n.msT, '14,345');
     el('tspan', { fill: C.dim }, n.msT, ' → ');
     el('tspan', { fill: C.ink, 'font-family': 'var(--mono)' }, n.msT, '5,283 MiB');
+    el('tspan', { fill: C.dim }, n.msT, ': streamed head on top of the first body recompute (head alone: ');
+    el('tspan', { fill: C.base, 'font-family': 'var(--mono)' }, n.msT, '9,661');
+    el('tspan', { fill: C.dim }, n.msT, ' → ');
+    el('tspan', { fill: C.ink, 'font-family': 'var(--mono)' }, n.msT, '5,283');
+    el('tspan', { fill: C.dim }, n.msT, ')');
 
     render(PK);   // keyframe: the window mid-sweep, slice 3 of 5
   }
@@ -307,6 +313,8 @@
       };
       T.sweep2 = Math.max(1.2, (tNe - 0.2) - (T.sweep + T.sweep1));
       const tl = gsap.timeline({ paused: true });
+      // video only: no kernel-name rows (the deck keeps them)
+      [N.k1, N.finK, ...N.prodK].forEach(e => e.setAttribute('display', 'none'));
       seq(api, T, tl);
       // exact segment length
       tl.set({}, {}, seg.duration);

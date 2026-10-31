@@ -50,6 +50,7 @@
       .ch-rules .r-svg .r-gate-n { font: 500 19px var(--mono); fill: var(--ink); }
       .ch-rules .r-svg .r-checks { font-size: 25px; font-weight: 600; fill: var(--ink); }
       .ch-rules .r-svg .r-score { font: 500 30px var(--mono); fill: var(--ink); }
+      .ch-rules .r-svg .r-off { font-size: 23px; fill: var(--ink); }
       .ch-rules .r-svg .r-sub { font-size: 20px; fill: var(--dim); }
       .ch-rules .r-svg .r-fail { font-size: 25px; font-weight: 600; fill: var(--base); }
       .ch-rules .r-svg .r-small { font: 500 17px var(--mono); fill: var(--dim); }`,
@@ -117,6 +118,8 @@
       el('tspan', { fill: C.ours }, sc, '30·ln(m′)/ln(3)');
       el('text', { x: FORK.x + 44, y: up + 76, class: 'r-sub' }, pass, 's, m = base ÷ ours, for time and memory; s′, m′ = 1.0 when the ratio is under 1.05.');
       el('text', { x: FORK.x + 44, y: dn + 15, class: 'r-fail' }, s, 'one fails: not admitted, 0 points');
+      // video only: stands where the formula is in the deck; hidden until video() reveals it
+      el('text', { x: FORK.x + 44, y: up + 36, class: 'r-off', opacity: 0 }, s, "Off the table: smaller batches, shorter sequences, Soup's gradient_checkpointing switch.");
 
       // fail marker on one gate (video only; hidden at keyframe)
       const fx = GATE.x + 4 * GATE.step;
@@ -169,17 +172,21 @@
       tl.fromTo(q('.r-gate'), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out', stagger: D.gate }, T.gates);
       tl.fromTo(q('.r-fork-stem'), { opacity: 0 }, { opacity: 1, duration: 0.3 }, T.fork);
       tl.fromTo(q('.r-fork-up'), { strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.out' }, T.fork + 0.1);
-      tl.fromTo(q('.r-pass'), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, T.fork + 0.35);
+      // video: the formula block is not shown; the one-line "off the table" note stands in its place
+      const upEl = T.off == null ? q('.r-pass, .r-fork-up') : q('.r-fork-up');
+      if (T.off != null) tl.set(q('.r-pass'), { opacity: 0 }, 0);
+      if (T.off != null) tl.fromTo(q('.r-off'), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, T.off);
+      else tl.fromTo(q('.r-pass'), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, T.fork + 0.35);
 
       // one fails (video): a gate goes red, the red branch takes the run to 0 points; the gate clears,
       // the rule stays.
       if (T.fail != null) {
         tl.fromTo(q('.r-gate-fail, .r-gate-x'), { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' }, T.fail);
-        tl.to(q('.r-pass, .r-fork-up'), { opacity: 0.25, duration: 0.4 }, T.fail + 0.1);
+        tl.to(upEl, { opacity: 0.25, duration: 0.4 }, T.fail + 0.1);
         tl.fromTo(q('.r-fork-dn'), { strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.out' }, T.zero - 0.3);
         tl.fromTo(q('.r-fail'), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, T.zero);
         tl.to(q('.r-gate-fail, .r-gate-x'), { opacity: 0, duration: 0.6, ease: 'power1.inOut' }, T.clear);
-        tl.to(q('.r-pass, .r-fork-up'), { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, T.clear);
+        tl.to(upEl, { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, T.clear);
       } else {
         tl.fromTo(q('.r-fork-dn'), { strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.out' }, T.fork + 0.25);
         tl.fromTo(q('.r-fail'), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, T.fork + 0.5);
@@ -205,6 +212,7 @@
         // outputs on "метрики"
         out: [tMetr - 0.1, tMetr + 0.04, tMetr + 0.18, tMetr + 0.32, tMetr + 0.46],
         seal: w('трогать') + 0.1,
+        off: w('трогать'),
         gates: tTen - 0.05,
         fork: tTen + 0.9,
         fail: tFail - 0.1,

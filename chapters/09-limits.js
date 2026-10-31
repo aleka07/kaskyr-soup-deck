@@ -31,6 +31,8 @@
     const o = { v: BASE };
     tl.fromTo(o, { v: BASE }, { v: OURS, duration: T.slideDur, ease: IO,
       onUpdate: () => { n.clk.textContent = o.v.toFixed(2); } }, T.slide);
+    // the moving number stays hidden while ours slides over the "83.13" base label, then fades in at 90.07
+    tl.fromTo(n.clk.parentNode, { opacity: 0 }, { opacity: 1, duration: 0.4 }, T.slide + T.slideDur);
     tl.fromTo(n.pl, { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.price)
       .fromTo(n.hr, { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.head)
       .fromTo(n.pv, { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.prev)
@@ -159,7 +161,7 @@
       const arLbl = el('text', { x: (X(OURS) + X(TARGET)) / 2, y: AY - 14, 'text-anchor': 'middle', 'font-size': 22, fill: C.ink }, ar);
       el('tspan', { class: 'm', fill: C.ours }, arLbl, '−10.9');
       el('tspan', { fill: C.ours, dx: 4 }, arLbl, 's');
-      el('tspan', {}, arLbl, ' to buy back for speed points');
+      el('tspan', {}, arLbl, ' more for speed points');
 
       // core.css sets svg text fill by CSS, which beats fill attributes: promote them to inline style
       s.querySelectorAll('text[fill], tspan[fill]').forEach(t => { t.style.fill = t.getAttribute('fill'); });

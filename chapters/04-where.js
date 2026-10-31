@@ -209,7 +209,7 @@
         hid: w('первое') - 0.1,
         wall: w('словарь') - 0.05,          // sweep across "...сто пятьдесят две тысячи токенов"
         rows: w('батч') - 0.15,
-        count: w('триста') - 0.05,
+        count: w('батч'),                   // counter runs from "батч" and lands on 311,164,928 as "миллионов" starts
         gb: w('гигабайта') - 0.1,
         slots: w('копий') - 0.1,
         copies: [w('лосс') - 0.55, w('градиент') - 0.55, w('энтропия') - 0.55, w('точность') - 0.55, w('точность') - 0.05],
@@ -217,7 +217,7 @@
         fwd: w('активации') - 0.45,
         bwd: w('обратного') - 0.15,
       };
-      const D = { xray: 2.1, wall: Math.max(1.6, w('токенов') + 0.35 - T.wall), count: Math.max(1.2, w('чисел') + 0.3 - T.count), fly: 0.75, lstag: 0.03, read: 0.035 };
+      const D = { xray: 2.1, wall: Math.max(1.6, w('токенов') + 0.35 - T.wall), count: w('миллионов') - T.count, fly: 0.75, lstag: 0.03, read: 0.035 };
       const tl = this._tl(root, api, T, D);
       if (tl.duration() < seg.duration) tl.to({}, { duration: seg.duration - tl.duration() });
       return tl;
