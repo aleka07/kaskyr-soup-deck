@@ -1,0 +1,64 @@
+/* KaskyrAlmaty deck v2: core styles. Chapter styles live in their modules (selectors start with .ch-<id>). */
+@font-face { font-family: "Onest"; src: url("fonts/Onest.ttf") format("truetype"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Plex Mono"; src: url("fonts/IBMPlexMono-Medium.ttf") format("truetype"); font-weight: 100 900; font-display: block; }
+
+:root {
+  --bg: #0B0F14; --ink: #E8EDF2; --dim: #8A96A3; --base: #FF5A36; --ours: #2EE6A6; --mech: #5B8CFF;
+  --line: #1E2833; --panel: #121922; --edge: #3A4756;
+  --sans: "Onest", system-ui, sans-serif; --mono: "Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--ink); height: 100%; overflow: hidden; }
+body { font-family: var(--sans); font-weight: 400; -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
+
+/* Stage: absolute centring + uniform scale (never grid centring). core.js sets the transform. */
+#viewport { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
+#stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 50% 50%;
+  transform: translate(-50%, -50%); overflow: hidden; background: var(--bg); }
+#slides { position: absolute; inset: 0; }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; padding: 88px 120px 0; visibility: hidden; overflow: hidden; }
+.slide.active { visibility: visible; }
+.boxlayer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; pointer-events: none; z-index: 5; }
+#hud { position: absolute; right: 120px; top: 40px; z-index: 6; font: 500 16px var(--mono); color: var(--dim); letter-spacing: .02em; pointer-events: none; }
+
+/* shared typography chapters may use */
+code, .mono { font-family: var(--mono); font-weight: 500; letter-spacing: -0.01em; }
+.base-c { color: var(--base); } .ours-c { color: var(--ours); } .mech-c { color: var(--mech); } .dim { color: var(--dim); } .ink { color: var(--ink); }
+h1, h2, h3 { font-weight: 650; letter-spacing: -0.025em; }
+h1 { font-size: 88px; line-height: 1.0; }
+h2 { font-size: 60px; line-height: 1.08; max-width: 1560px; }
+h3 { font-size: 26px; letter-spacing: -0.01em; font-weight: 600; }
+p { font-size: 24px; line-height: 1.4; color: var(--dim); }
+.kicker { font: 500 18px var(--mono); color: var(--dim); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 18px; }
+/* default font for SVG text; no fill here, so a chapter's fill attribute wins (SVG default fill is black: set one) */
+svg text { font-family: var(--mono); font-weight: 500; }
+/* zero-specificity fallback fill for chapter SVG text that sets no fill attribute (any chapter rule or attribute wins) */
+:where(.slide svg text:not([fill])) { fill: var(--dim); }
+svg .sans { font-family: var(--sans); }
+
+/* the memory box */
+.mbox text { font-family: var(--mono); font-weight: 500; fill: var(--dim); }
+.mbox .mb-lbl { font-family: var(--sans); font-weight: 600; font-size: 17px; }
+.mbox .mb-above { font-family: var(--sans); font-weight: 500; font-size: 15px; }
+.mbox .mb-tick { font-size: 15px; fill: var(--dim); }
+.mbox .mb-crisp { shape-rendering: crispEdges; }
+
+/* placeholder + errors */
+.placeholder { display: flex; flex-direction: column; gap: 18px; padding-top: 300px; }
+.placeholder .ph-n { font: 500 22px var(--mono); color: var(--dim); }
+.placeholder .ph-t { font-size: 56px; font-weight: 600; color: #2A3644; letter-spacing: -0.02em; }
+.ch-error { position: absolute; left: 120px; top: 40px; z-index: 9; font: 500 16px var(--mono); color: var(--base); background: #2A1610; padding: 8px 12px; white-space: pre-wrap; max-width: 1680px; }
+
+/* video: nothing may move by wall clock */
+body.video *, body.video *::before, body.video *::after { transition: none !important; animation: none !important; caret-color: transparent; }
+body.video #hud { display: none; }
+
+/* print: every slide at its keyframe, one per page */
+body.print, html.print { overflow: visible; height: auto; }
+body.print #viewport { position: static; }
+body.print #stage { position: relative; left: 0; top: 0; transform: none !important; height: auto; overflow: visible; }
+body.print #slides { position: static; }
+body.print .slide { position: relative; visibility: visible; break-after: page; page-break-after: always; }
+body.print #hud { display: none; }
+body.print .pg-print { position: absolute; right: 120px; top: 40px; font: 500 16px var(--mono); color: var(--dim); z-index: 6; }
+@page { size: 1920px 1080px; margin: 0; }

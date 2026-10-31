@@ -364,7 +364,7 @@
   miniBase.style.width = pct(14345);
   let cur = -1, ctx = null;
 
-  function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `scale(${k})`; document.getElementById('chrome').style.cssText = ''; }
+  function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(-50%, -50%) scale(${k})`; document.getElementById('chrome').style.cssText = ''; }
   function setMini(i, animate) {
     const m = slides[i].dataset.mem ? +slides[i].dataset.mem : 0;
     mini.style.opacity = (i === 0 || i === slides.length - 1) ? 0 : 1;

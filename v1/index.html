@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KaskyrAlmaty: Soup Kernel Challenge, 14,345 to 2,541 MiB</title>
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+<!-- 1. Title -->
+<section class="slide s-title" data-mem="2541" data-title="Title">
+  <div class="team">
+    <span class="team-name">KaskyrAlmaty</span>
+    <span class="team-event">Soup Kernel Challenge, Decentrathon 6.0</span>
+  </div>
+  <h1 class="hero-num">
+    <span class="mono base-c" id="t-base">14,345</span>
+    <span class="arrow">&rarr;</span>
+    <span class="mono ours-c" id="t-ours">2,541</span>
+    <span class="unit">MiB</span>
+  </h1>
+  <p class="lede">Peak GPU memory of one fixed LoRA fine-tune on a free 16 GB Kaggle T4. Same training, same eval loss, 5.6&times; less memory, our own Triton kernels.</p>
+  <div class="bigbar" id="t-bar">
+    <div class="bb-track"></div>
+    <div class="bb-fill base" data-mib="14345"></div>
+    <div class="bb-fill ours" data-mib="2541"></div>
+    <div class="bb-ticks"></div>
+    <div class="bb-cap mono">16 GB T4</div>
+  </div>
+</section>
+
+<!-- 2. The task -->
+<section class="slide s-task" data-mem="14345" data-title="The task">
+  <h2>Change nothing about the training.<br>Make it smaller and faster with our own kernels.</h2>
+  <div class="task-grid">
+    <div class="spec">
+      <div class="spec-row"><span class="k">model</span><span class="v">Qwen2-family, NF4 4-bit weights</span></div>
+      <div class="spec-row"><span class="k">adapter</span><span class="v">LoRA on <code>q_proj</code> / <code>v_proj</code></span></div>
+      <div class="spec-row"><span class="k">depth</span><span class="v mono">28 decoder layers</span></div>
+      <div class="spec-row"><span class="k">vocabulary</span><span class="v mono">151,936 tokens</span></div>
+      <div class="spec-row"><span class="k">GPU</span><span class="v">Kaggle T4, 16 GB, free tier</span></div>
+      <div class="spec-row locked"><span class="k">frozen</span><span class="v">task, data, steps, optimizer, outputs</span></div>
+      <div class="spec-row"><span class="k">ours</span><span class="v">Triton kernels, written by us</span></div>
+      <div class="checks" id="task-checks">
+        <div class="check-row"></div>
+        <p class="note">10 admission checks in <code>harness/check_rules.py</code>. Fail one and the entry scores nothing.</p>
+      </div>
+    </div>
+    <div class="score">
+      <div class="formula mono">Score = <span class="speed-c">35&middot;ln(s&prime;)/ln(1.5)</span> + <span class="ours-c">30&middot;ln(m&prime;)/ln(3)</span></div>
+      <p class="formula-sub">s = speed ratio, m = memory ratio, base over ours. A ratio under 1.05 counts as 1.0.</p>
+      <svg class="score-plot" id="score-plot" viewBox="0 0 860 470"></svg>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Where the memory goes -->
+<section class="slide s-mem" data-mem="14345" data-title="Where the memory goes">
+  <h2>The base run fills 14.3 of 16 GB.<br>Copies of one tensor take 5 to 7 GB of it.</h2>
+  <div class="logits-block">
+    <svg id="logits-svg" viewBox="0 0 1680 330"></svg>
+  </div>
+  <div class="bigbar mem-bar" id="m-bar">
+    <div class="bb-track"></div>
+    <div class="bb-seg seg-logit" data-from="0" data-mib="6300"><span>logit copies, est. 5&ndash;7 GB</span></div>
+    <div class="bb-seg seg-act" data-from="6300" data-mib="8045"><span>28 layers of activations saved for backward: the rest</span></div>
+    <div class="bb-range" data-from="5120" data-mib="2048"></div>
+    <div class="bb-ticks"></div>
+    <div class="bb-peak mono" data-mib="14345">14,345 MiB peak</div>
+  </div>
+</section>
+
+<!-- 4. Head lane -->
+<section class="slide s-head" data-mem="5283" data-title="Head lane: streamed vocabulary">
+  <h2>Head lane: the 151,936-wide logits never exist.</h2>
+  <p class="byline">Alikhan Amirkhanov, <code>solution/head/</code></p>
+  <svg id="head-svg" viewBox="0 0 1680 420"></svg>
+  <div class="head-bottom">
+    <div class="bwd">
+      <h3>Backward streams the frozen weight in slices</h3>
+      <ol class="pipe" id="head-pipe">
+        <li>gather supervised positions</li>
+        <li>stream frozen weight slices</li>
+        <li>compensated hi + lo fp16 derivatives</li>
+        <li>two cuBLAS FP32 products</li>
+        <li>one cast and scatter</li>
+      </ol>
+      <p class="note">Checked against independent unrounded FP64 autograd, <span class="mono">rtol 0.01 / atol 0.003</span>. Ideas from Liger fused linear CE and Apple Cut Cross-Entropy; the code is ours.</p>
+    </div>
+    <div class="kernels">
+      <h3>7 Triton kernels, <code>kernels.py</code></h3>
+      <ul class="mono klist">
+        <li>head_stats_partial_kernel</li>
+        <li>head_online_merge_kernel</li>
+        <li>head_stats_finish_kernel</li>
+        <li>head_residual_max_kernel</li>
+        <li>head_residual_scale_kernel</li>
+        <li>head_ce_compensated_kernel</li>
+        <li>head_accumulate_compensated_kernel</li>
+      </ul>
+    </div>
+    <div class="delta" id="head-delta">
+      <div class="delta-from mono base-c">9,661</div>
+      <div class="delta-to mono ours-c">5,283 <small>MiB</small></div>
+      <p class="note">body-only solution, then with the streamed head</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Body lane -->
+<section class="slide s-body" data-mem="2541" data-title="Body lane: forget and recompute">
+  <h2>Body lane: forget activations in forward,<br>rebuild them exactly in backward.</h2>
+  <p class="byline">Timur Ishmurzin, <code>solution/body/</code></p>
+  <svg id="body-svg" viewBox="0 0 1680 360"></svg>
+  <div class="body-bottom">
+    <div class="recipe">
+      <h3>Exact residual reconstruction</h3>
+      <div class="eq mono">
+        <div><span class="dim">forward</span><span>h = x<sub>fp32</sub> + attn(x)<sub>fp16</sub></span></div>
+        <div><span class="dim">base</span><span class="base-c">stores h for backward</span></div>
+        <div><span class="dim">ours</span><span class="ours-c">rebuilds h from x and the actual attn branch, same ordered FP32 sum</span></div>
+      </div>
+      <p class="note">No casting, compression or caches: the rebuilt value is the one forward computed. Own recompute of MLP, attention and norm input, with RNG replay so LoRA dropout 0.05 stays identical.</p>
+    </div>
+    <div class="kernels">
+      <h3>4 Triton kernels</h3>
+      <ul class="mono klist">
+        <li>body_nf4_decode_weight</li>
+        <li>body_rmsnorm_forward</li>
+        <li>body_rmsnorm_backward</li>
+        <li>body_rope_token_kernel</li>
+      </ul>
+      <p class="note">NF4 dequant for backward, RMSNorm both ways, RoPE per token.</p>
+    </div>
+    <div class="delta" id="body-delta">
+      <div class="delta-from mono base-c">5.3 GB</div>
+      <div class="delta-to mono ours-c">2.5 <small>GB</small></div>
+      <p class="note">replay + reconstruction on top of the streamed head</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Results -->
+<section class="slide s-res" data-mem="2541" data-title="Results">
+  <h2>Run 52, Kaggle T4: 5.6&times; less memory, same loss.</h2>
+  <div class="res-bars" id="res-bars">
+    <div class="rb-row">
+      <span class="rb-label">base</span>
+      <div class="bigbar slim"><div class="bb-track"></div><div class="bb-fill base" data-mib="14345"></div><div class="bb-ticks"></div></div>
+      <span class="rb-val mono base-c">14,345 MiB</span>
+    </div>
+    <div class="rb-row">
+      <span class="rb-label">ours</span>
+      <div class="bigbar slim"><div class="bb-track"></div><div class="bb-fill ours" data-mib="2541"></div><div class="bb-mark" data-mib="2400"><span>Unsloth, similar LoRA, ~2,400</span></div><div class="bb-ticks"></div></div>
+      <span class="rb-val mono ours-c">2,541 MiB</span>
+    </div>
+  </div>
+  <div class="res-grid">
+    <div class="fig fig-m"><div class="fig-n mono ours-c">5.6454</div><p>m, memory ratio. Memory term &asymp; 47.3 points.</p></div>
+    <div class="fig"><div class="fig-n mono">2.04964 <span class="sm">&rarr;</span> 2.04961</div><p>eval loss, base to ours (&minus;0.001%)</p></div>
+    <div class="fig"><div class="check-row" id="res-checks"></div><p>10 of 10 admission checks; 350 solution tests and 79 Soup regression tests pass in the run</p></div>
+    <div class="fig"><div class="fig-n mono">8.50%</div><div class="share"><div class="share-fill"></div><div class="share-req"></div></div><p>own-kernel share of training time, 5% required</p></div>
+    <div class="fig"><div class="fig-n mono">83.13 <span class="sm">&rarr;</span> <span class="base-c">90.07 s</span></div><p>wall time of <code>soup train</code>; speed term 0</p></div>
+  </div>
+</section>
+
+<!-- 7. How we worked -->
+<section class="slide s-proc" data-mem="2541" data-title="How we worked">
+  <h2>Two humans, two AI orchestrators, one measuring loop.</h2>
+  <div class="proc-grid">
+    <div class="proc-text">
+      <div class="loop mono" id="loop">
+        <span>experiment</span><span class="la">&rarr;</span><span>Kaggle T4</span><span class="la">&rarr;</span><span>ledger row</span>
+      </div>
+      <dl class="proc-facts">
+        <div><dt class="mono">~550</dt><dd>ledger rows across both lanes</dd></div>
+        <div><dt class="mono">~110</dt><dd>experiment branches; dead ideas stay as branches with a kill row</dd></div>
+        <div><dt class="mono">3 h</dt><dd>between fresh independent reviews</dd></div>
+        <div><dt class="mono">every</dt><dd>merge into main gets a cross-lane review</dd></div>
+      </dl>
+    </div>
+    <div class="proc-chart">
+      <svg id="ledger-svg" viewBox="0 0 1060 640"></svg>
+      <div class="legend"><span class="lg lg-h">head lane run</span><span class="lg lg-b">body lane run</span><span class="lg lg-k">killed idea</span><span class="lg lg-f">best admitted-so-far peak</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. Honest limits -->
+<section class="slide s-lim" data-mem="2541" data-title="Honest limits">
+  <h2>What we did not win: speed.<br>Recompute costs time, and the margin is thin.</h2>
+  <svg id="lim-svg" viewBox="0 0 1680 380"></svg>
+  <div class="lim-grid">
+    <div><h3>Why we submit 029d932</h3><p>The previous main reached 2,459 MiB and passed in run 49, then failed check 8 in run 51 at &times;1.136. Commit <code>029d932</code> gives up 82 MiB and passes, 1.37 s inside the limit.</p></div>
+    <div><h3>Precision is a contract</h3><p>Head gradients follow an explicit FP64-reference contract, not elementwise agreement with dense autocast.</p></div>
+    <div><h3>Guarded to this task</h3><p>T4 fp16 path, this model. Unsupported paths fall back to the stock code.</p></div>
+  </div>
+</section>
+
+<!-- 9. Next steps -->
+<section class="slide s-next" data-mem="2541" data-title="Next steps">
+  <h2>Next: win back the 7 seconds, then go past the base.</h2>
+  <svg id="next-svg" viewBox="0 0 1680 330"></svg>
+  <div class="next-grid">
+    <div><span class="nk mono">1</span><h3>Overlap or fuse the recompute</h3><p>Backward rebuilds what forward dropped. Overlapping it with the GEMMs, or fusing it into them, is where the 8% went.</p></div>
+    <div><span class="nk mono">2</span><h3>Fuse NF4 dequant into the GEMM</h3><p>Today the weight is decoded to fp16, then multiplied. One kernel would skip the round trip through memory.</p></div>
+    <div><span class="nk mono">3</span><h3>Cut start-up</h3><p>About 24 s of the wall is model load and 4-bit quantization, before the first step runs.</p></div>
+  </div>
+</section>
+
+<!-- 10. Team and links -->
+<section class="slide s-end" data-mem="2541" data-title="Team and links">
+  <h2>KaskyrAlmaty</h2>
+  <div class="people">
+    <div><div class="pn">Alikhan Amirkhanov</div><p>captain, head lane: streamed vocabulary, compensated backward</p></div>
+    <div><div class="pn">Timur Ishmurzin</div><p>body lane: recompute, exact residual reconstruction, NF4, RMSNorm, RoPE</p></div>
+  </div>
+  <dl class="links mono">
+    <div><dt>run it</dt><dd>kaggle.com/code/alikhanamirkhanov/kaskyr-head-1?scriptVersionId=364215273</dd></div>
+    <div><dt>code</dt><dd>github.com/BAITC-Hacks/hack-bb68f34c-kaskyralmaty</dd></div>
+    <div><dt>commit</dt><dd>029d932920765cb17f40daf651c5bf0042db74d0</dd></div>
+  </dl>
+  <div class="end-cap mono"><span class="base-c">14,345</span> &rarr; <span class="ours-c">2,541 MiB</span> on a 16 GB T4</div>
+  <div class="bigbar end-bar" id="e-bar">
+    <div class="bb-track"></div>
+    <div class="bb-fill base ghost" data-mib="14345"></div>
+    <div class="bb-fill ours" data-mib="2541"></div>
+    <div class="bb-ticks"></div>
+  </div>
+</section>
+
+<footer id="chrome">
+  <div class="mini" title="peak GPU memory at this point of the story">
+    <div class="mini-track"><div class="mini-base"></div><div class="mini-fill"></div></div>
+    <span class="mini-val mono"></span>
+  </div>
+  <span class="pageno mono"></span>
+</footer>
+</div>
+</div>
+<script src="assets/gsap.min.js"></script>
+<script src="assets/ledger.js"></script>
+<script src="assets/deck.js"></script>
+</body>
+</html>

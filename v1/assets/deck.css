@@ -13,8 +13,8 @@ code, .mono { font-family: var(--mono); font-weight: 500; letter-spacing: -0.01e
 code { color: var(--ink); font-size: 0.9em; }
 .base-c { color: var(--base); } .ours-c { color: var(--ours); } .speed-c { color: var(--mech); } .dim { color: var(--dim); }
 
-#viewport { position: fixed; inset: 0; display: grid; place-items: center; }
-#stage { position: relative; width: 1920px; height: 1080px; transform-origin: center center; flex: none; }
+#viewport { position: fixed; inset: 0; overflow: hidden; }
+#stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center center; transform: translate(-50%, -50%); }
 .slide { position: absolute; inset: 0; padding: 88px 120px 120px; visibility: hidden; }
 .slide.active { visibility: visible; }
 
@@ -175,7 +175,7 @@ svg .sans { font-family: var(--sans); font-weight: 500; }
 /* print: every slide at its final state */
 body.print, body.print html { overflow: visible; height: auto; }
 body.print #viewport { position: static; display: block; }
-body.print #stage { transform: none !important; width: 1920px; height: auto; }
+body.print #stage { position: relative; left: 0; top: 0; transform: none !important; width: 1920px; height: auto; }
 body.print .slide { position: relative; visibility: visible; width: 1920px; height: 1080px; page-break-after: always; break-after: page; overflow: hidden; }
 body.print #chrome { display: none; }
 body.print .slide .pg-print { position: absolute; right: 120px; bottom: 38px; font: 500 18px var(--mono); color: var(--dim); }
